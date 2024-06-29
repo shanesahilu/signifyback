@@ -10,6 +10,10 @@ if not os.path.exists(directory):
 if not os.path.exists(f'{directory}/blank'):
     os.mkdir(f'{directory}/blank')
     
+for i in range(65,69):
+    letter  = chr(i)
+    if not os.path.exists(f'{directory}/{letter}'):
+        os.mkdir(f'{directory}/{letter}')
 
 
 
