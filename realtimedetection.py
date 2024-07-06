@@ -1,6 +1,7 @@
-import cv2
 import numpy as np
+import cv2
 from tensorflow.python.keras.models import model_from_json
+
 class VideoCamera(object):
     def __init__(self):
         self.model = self.load_model()
@@ -8,10 +9,10 @@ class VideoCamera(object):
         self.cap = cv2.VideoCapture(0)
 
     def load_model(self):
-        with open("signlanguagedetectionmodel48x48.json", "r") as json_file:
+        with open("signifymodel48x48.json", "r") as json_file:
             model_json = json_file.read()
         model = model_from_json(model_json)
-        model.load_weights("signlanguagedetectionmodel48x48.h5")
+        model.load_weights("signifymodel48x48.h5")
         return model
 
     def extract_features(self, image):
@@ -22,22 +23,22 @@ class VideoCamera(object):
     def get_frame(self):
         ret, frame = self.cap.read()
         if not ret:
-            return None
+            return None, {"label": "No frame", "accuracy": "0"}
 
+        # Draw ROI rectangle
         cv2.rectangle(frame, (0, 40), (300, 300), (0, 165, 255), 1)
+        
+        # Add instruction text above the ROI
+        cv2.putText(frame, "Place your hand here", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2, cv2.LINE_AA)
+        
         cropframe = frame[40:300, 0:300]
         cropframe = cv2.cvtColor(cropframe, cv2.COLOR_BGR2GRAY)
         cropframe = cv2.resize(cropframe, (48, 48))
         cropframe = self.extract_features(cropframe)
         pred = self.model.predict(cropframe)
         prediction_label = self.label[pred.argmax()]
-        cv2.rectangle(frame, (0, 0), (300, 40), (0, 165, 255), -1)
+        accu = "{:.2f}".format(np.max(pred) * 100)
 
-        if prediction_label == 'blank':
-            cv2.putText(frame, " ", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-        else:
-            accu = "{:.2f}".format(np.max(pred) * 100)
-            cv2.putText(frame, f'{prediction_label}  {accu}%', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
-
+        # Encode frame to JPEG format
         ret, jpeg = cv2.imencode('.jpg', frame)
-        return jpeg.tobytes()
+        return jpeg.tobytes(), {"label": prediction_label, "accuracy": accu}

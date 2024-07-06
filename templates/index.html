@@ -26,8 +26,8 @@
             width: 80%;
             margin: 0 auto;
             text-align: center;
-            padding-top: 50px;
-            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+            padding-top: 30px;
+           
         }
 
         h1 {
@@ -35,23 +35,48 @@
         }
 
         #bg {
-            width: 100%;
+            width: 65%;
             border: 2px solid #ccc;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-            margin-top: 20px;
+            margin-top: 10px;
+        }
+
+        #prediction {
+            font-size: 38px;
+            font-family: sans-serif ;
+            font-weight: bold;
+            color: #000000;
+            margin-top: 30px;
         }
     </style>
 </head>
 
 <body>
     <video autoplay muted loop id="myVideo">
-        <source src="videobg.mov" type="video/mp4">
+        <source src="{{ url_for('static', filename='videobg.mov') }}" type="video/mp4">
     </video>
 
     <div class="container">
-        <h1>Real-time Video Stream</h1>
+        <h1>SIGN TO TEXT</h1>
         <img id="bg" src="{{ url_for('video_feed') }}" alt="Video Stream">
+        <div id="prediction">Loading prediction...</div>
     </div>
+
+    <script>
+        function updatePrediction() {
+            fetch('/prediction')
+                .then(response => response.json())
+                .then(data => {
+                    const predictionElement = document.getElementById('prediction');
+                    predictionElement.textContent = `Prediction: ${data.label} (Accuracy: ${data.accuracy}%)`;
+                })
+                .catch(error => {
+                    console.error('Error fetching prediction:', error);
+                });
+        }
+
+        setInterval(updatePrediction, 1000); // Update prediction every second
+    </script>
 </body>
 </html>
